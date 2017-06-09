@@ -6,17 +6,24 @@ import {
   Response
 } from '@angular/http'
 import { Observer, Observable } from 'rxjs'
+
+@Injectable()
+export class APIService {
+
+}
+
 import { PSObject } from './core/model'
 
 abstract class AbstractService<T extends PSObject> {
 	constructor(
+		protected http: Http,
+		protected apiService: APIService,
 		protected nodename: string,
 		protected resource: string,
 		protected properties: string[],
 		protected translatableIndexes: number[],
 		protected readonlyIndexes: number[],
-		protected requiredIndexes: number[],
-		protected http: Http) { 
+		protected requiredIndexes: number[]) { 
 
 	}
 
@@ -95,10 +102,9 @@ import {
 
 @Injectable()
 export class AddressService extends AbstractService<Address> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'address',
-			'addresses',
+			http, apiService, 'address', 'addresses',
 			[
 				'id_customer',
 				'id_manufacturer',
@@ -125,17 +131,15 @@ export class AddressService extends AbstractService<Address> {
 			],
 			[],
 			[],
-			[4, 6, 8, 9, 11, 14],
-			http)
+			[4, 6, 8, 9, 11, 14])
 	}
 }
 
 @Injectable()
 export class CarrierService extends AbstractService<Carrier> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'carrier',
-			'carriers',
+			http, apiService, 'carrier', 'carriers',
 			[
 				'deleted',
 				'is_module',
@@ -161,17 +165,15 @@ export class CarrierService extends AbstractService<Carrier> {
 			],
 			[20],
 			[],
-			[4, 5, 20],
-			http)
+			[4, 5, 20])
 	}
 }
 
 @Injectable()
 export class CartRuleService extends AbstractService<CartRule> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'cart_rule',
-			'cart_rules',
+			http, apiService, 'cart_rule', 'cart_rules',
 			[
 				'id_customer',
 				'date_from' /* [1] */,
@@ -208,17 +210,15 @@ export class CartRuleService extends AbstractService<CartRule> {
 			],
 			[31],
 			[],
-			[1, 2, 31],
-			http)
+			[1, 2, 31])
 	}
 }
 
 @Injectable()
 export class CartService extends AbstractService<Cart> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'cart',
-			'carts',
+			http, apiService, 'cart', 'carts',
 			[
 				'id_address_delivery',
 				'id_address_invoice',
@@ -241,17 +241,15 @@ export class CartService extends AbstractService<Cart> {
 			],
 			[],
 			[],
-			[2, 5],
-			http)
+			[2, 5])
 	}
 }
 
 @Injectable()
 export class CategoryService extends AbstractService<Category> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'category',
-			'categories',
+			http, apiService, 'category', 'categories',
 			[
 				'id_parent',
 				'level_depth' /* [1] */,
@@ -271,17 +269,15 @@ export class CategoryService extends AbstractService<Category> {
 			],
 			[9, 10, 11, 12, 13, 14],
 			[1, 2],
-			[3, 9, 10],
-			http)
+			[3, 9, 10])
 	}
 }
 
 @Injectable()
 export class CombinationService extends AbstractService<Combination> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'combination',
-			'combinations',
+			http, apiService, 'combination', 'combinations',
 			[
 				'id_product' /* [0] */,
 				'location',
@@ -301,17 +297,15 @@ export class CombinationService extends AbstractService<Combination> {
 			],
 			[],
 			[],
-			[0, 12],
-			http)
+			[0, 12])
 	}
 }
 
 @Injectable()
 export class ConfigurationService extends AbstractService<Configuration> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'configuration',
-			'configurations',
+			http, apiService, 'configuration', 'configurations',
 			[
 				'value',
 				'name' /* [1] */,
@@ -322,17 +316,15 @@ export class ConfigurationService extends AbstractService<Configuration> {
 			],
 			[],
 			[],
-			[1],
-			http)
+			[1])
 	}
 }
 
 @Injectable()
 export class ContactService extends AbstractService<Contact> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'contact',
-			'contacts',
+			http, apiService, 'contact', 'contacts',
 			[
 				'email',
 				'customer_service',
@@ -341,17 +333,15 @@ export class ContactService extends AbstractService<Contact> {
 			],
 			[2, 3],
 			[],
-			[2],
-			http)
+			[2])
 	}
 }
 
 @Injectable()
 export class ContentService extends AbstractService<Content> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'content',
-			'content_management_system',
+			http, apiService, 'content', 'content_management_system',
 			[
 				'id_cms_category',
 				'position',
@@ -365,17 +355,15 @@ export class ContentService extends AbstractService<Content> {
 			],
 			[4, 5, 6, 7, 8],
 			[],
-			[6, 7],
-			http)
+			[6, 7])
 	}
 }
 
 @Injectable()
 export class CountryService extends AbstractService<Country> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'country',
-			'countries',
+			http, apiService, 'country', 'countries',
 			[
 				'id_zone' /* [0] */,
 				'id_currency',
@@ -391,17 +379,15 @@ export class CountryService extends AbstractService<Country> {
 			],
 			[10],
 			[],
-			[0, 3, 5, 6, 9, 10],
-			http)
+			[0, 3, 5, 6, 9, 10])
 	}
 }
 
 @Injectable()
 export class CurrencyService extends AbstractService<Currency> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'currency',
-			'currencies',
+			http, apiService, 'currency', 'currencies',
 			[
 				'name' /* [0] */,
 				'iso_code' /* [1] */,
@@ -416,17 +402,15 @@ export class CurrencyService extends AbstractService<Currency> {
 			],
 			[],
 			[],
-			[0, 1, 4, 5, 6, 7],
-			http)
+			[0, 1, 4, 5, 6, 7])
 	}
 }
 
 @Injectable()
 export class CustomerMessageService extends AbstractService<CustomerMessage> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'customer_message',
-			'customer_messages',
+			http, apiService, 'customer_message', 'customer_messages',
 			[
 				'id_employee',
 				'id_customer_thread',
@@ -441,17 +425,15 @@ export class CustomerMessageService extends AbstractService<CustomerMessage> {
 			],
 			[],
 			[],
-			[3],
-			http)
+			[3])
 	}
 }
 
 @Injectable()
 export class CustomerThreadService extends AbstractService<CustomerThread> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'customer_thread',
-			'customer_threads',
+			http, apiService, 'customer_thread', 'customer_threads',
 			[
 				'id_lang' /* [0] */,
 				'id_shop',
@@ -467,17 +449,15 @@ export class CustomerThreadService extends AbstractService<CustomerThread> {
 			],
 			[],
 			[],
-			[0, 5, 7],
-			http)
+			[0, 5, 7])
 	}
 }
 
 @Injectable()
 export class CustomerService extends AbstractService<Customer> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'customer',
-			'customers',
+			http, apiService, 'customer', 'customers',
 			[
 				'id_default_group',
 				'id_lang',
@@ -512,17 +492,15 @@ export class CustomerService extends AbstractService<Customer> {
 			],
 			[],
 			[4, 5],
-			[7, 8, 9, 10],
-			http)
+			[7, 8, 9, 10])
 	}
 }
 
 @Injectable()
 export class CustomizationService extends AbstractService<Customization> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'customization',
-			'customizations',
+			http, apiService, 'customization', 'customizations',
 			[
 				'id_address_delivery' /* [0] */,
 				'id_cart' /* [1] */,
@@ -535,17 +513,15 @@ export class CustomizationService extends AbstractService<Customization> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 5, 6, 7],
-			http)
+			[0, 1, 2, 3, 4, 5, 6, 7])
 	}
 }
 
 @Injectable()
 export class DeliveryService extends AbstractService<Delivery> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'delivery',
-			'deliveries',
+			http, apiService, 'delivery', 'deliveries',
 			[
 				'id_carrier' /* [0] */,
 				'id_range_price' /* [1] */,
@@ -557,17 +533,15 @@ export class DeliveryService extends AbstractService<Delivery> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 6],
-			http)
+			[0, 1, 2, 3, 6])
 	}
 }
 
 @Injectable()
 export class EmployeeService extends AbstractService<Employee> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'employee',
-			'employees',
+			http, apiService, 'employee', 'employees',
 			[
 				'id_lang' /* [0] */,
 				'last_passwd_gen' /* [1] */,
@@ -596,17 +570,15 @@ export class EmployeeService extends AbstractService<Employee> {
 			],
 			[],
 			[1, 2, 3, 4, 5],
-			[0, 6, 7, 8, 9, 12],
-			http)
+			[0, 6, 7, 8, 9, 12])
 	}
 }
 
 @Injectable()
 export class GroupService extends AbstractService<Group> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'group',
-			'groups',
+			http, apiService, 'group', 'groups',
 			[
 				'reduction',
 				'price_display_method' /* [1] */,
@@ -617,17 +589,15 @@ export class GroupService extends AbstractService<Group> {
 			],
 			[5],
 			[],
-			[1, 5],
-			http)
+			[1, 5])
 	}
 }
 
 @Injectable()
 export class GuestService extends AbstractService<Guest> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'guest',
-			'guests',
+			http, apiService, 'guest', 'guests',
 			[
 				'id_customer',
 				'id_operating_system',
@@ -647,17 +617,15 @@ export class GuestService extends AbstractService<Guest> {
 			],
 			[],
 			[],
-			[],
-			http)
+			[])
 	}
 }
 
 @Injectable()
 export class ImageTypeService extends AbstractService<ImageType> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'image_type',
-			'image_types',
+			http, apiService, 'image_type', 'image_types',
 			[
 				'name' /* [0] */,
 				'width' /* [1] */,
@@ -671,17 +639,15 @@ export class ImageTypeService extends AbstractService<ImageType> {
 			],
 			[],
 			[],
-			[0, 1, 2],
-			http)
+			[0, 1, 2])
 	}
 }
 
 @Injectable()
 export class LanguageService extends AbstractService<Language> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'language',
-			'languages',
+			http, apiService, 'language', 'languages',
 			[
 				'name' /* [0] */,
 				'iso_code' /* [1] */,
@@ -693,17 +659,15 @@ export class LanguageService extends AbstractService<Language> {
 			],
 			[],
 			[],
-			[0, 1, 5, 6],
-			http)
+			[0, 1, 5, 6])
 	}
 }
 
 @Injectable()
 export class ManufacturerService extends AbstractService<Manufacturer> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'manufacturer',
-			'manufacturers',
+			http, apiService, 'manufacturer', 'manufacturers',
 			[
 				'active',
 				'link_rewrite' /* [1] */,
@@ -718,17 +682,15 @@ export class ManufacturerService extends AbstractService<Manufacturer> {
 			],
 			[5, 6, 7, 8, 9],
 			[1],
-			[2],
-			http)
+			[2])
 	}
 }
 
 @Injectable()
 export class OrderCarrierService extends AbstractService<OrderCarrier> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order_carrier',
-			'order_carriers',
+			http, apiService, 'order_carrier', 'order_carriers',
 			[
 				'id_order' /* [0] */,
 				'id_carrier' /* [1] */,
@@ -741,17 +703,15 @@ export class OrderCarrierService extends AbstractService<OrderCarrier> {
 			],
 			[],
 			[],
-			[0, 1],
-			http)
+			[0, 1])
 	}
 }
 
 @Injectable()
 export class OrderDetailService extends AbstractService<OrderDetail> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order_detail',
-			'order_details',
+			http, apiService, 'order_detail', 'order_details',
 			[
 				'id_order' /* [0] */,
 				'product_id',
@@ -797,17 +757,15 @@ export class OrderDetailService extends AbstractService<OrderDetail> {
 			],
 			[],
 			[],
-			[0, 9, 10, 11, 12, 16],
-			http)
+			[0, 9, 10, 11, 12, 16])
 	}
 }
 
 @Injectable()
 export class OrderCartRuleService extends AbstractService<OrderCartRule> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order_cart_rule',
-			'order_discounts',
+			http, apiService, 'order_cart_rule', 'order_discounts',
 			[
 				'id_order' /* [0] */,
 				'id_cart_rule' /* [1] */,
@@ -819,17 +777,15 @@ export class OrderCartRuleService extends AbstractService<OrderCartRule> {
 			],
 			[],
 			[],
-			[0, 1, 3, 4, 5],
-			http)
+			[0, 1, 3, 4, 5])
 	}
 }
 
 @Injectable()
 export class OrderHistoryService extends AbstractService<OrderHistory> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order_history',
-			'order_histories',
+			http, apiService, 'order_history', 'order_histories',
 			[
 				'id_employee',
 				'id_order_state' /* [1] */,
@@ -838,17 +794,15 @@ export class OrderHistoryService extends AbstractService<OrderHistory> {
 			],
 			[],
 			[],
-			[1, 2],
-			http)
+			[1, 2])
 	}
 }
 
 @Injectable()
 export class OrderInvoiceService extends AbstractService<OrderInvoice> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order_invoice',
-			'order_invoices',
+			http, apiService, 'order_invoice', 'order_invoices',
 			[
 				'id_order' /* [0] */,
 				'number' /* [1] */,
@@ -873,17 +827,15 @@ export class OrderInvoiceService extends AbstractService<OrderInvoice> {
 			],
 			[],
 			[],
-			[0, 1],
-			http)
+			[0, 1])
 	}
 }
 
 @Injectable()
 export class OrderPaymentService extends AbstractService<OrderPayment> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order_payment',
-			'order_payments',
+			http, apiService, 'order_payment', 'order_payments',
 			[
 				'order_reference',
 				'id_currency' /* [1] */,
@@ -899,17 +851,15 @@ export class OrderPaymentService extends AbstractService<OrderPayment> {
 			],
 			[],
 			[],
-			[1, 2],
-			http)
+			[1, 2])
 	}
 }
 
 @Injectable()
 export class OrderSlipService extends AbstractService<OrderSlip> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order_slip',
-			'order_slip',
+			http, apiService, 'order_slip', 'order_slip',
 			[
 				'id_customer' /* [0] */,
 				'id_order' /* [1] */,
@@ -928,17 +878,15 @@ export class OrderSlipService extends AbstractService<OrderSlip> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 5, 6],
-			http)
+			[0, 1, 2, 3, 4, 5, 6])
 	}
 }
 
 @Injectable()
 export class OrderStateService extends AbstractService<OrderState> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order_state',
-			'order_states',
+			http, apiService, 'order_state', 'order_states',
 			[
 				'unremovable',
 				'delivery',
@@ -958,17 +906,15 @@ export class OrderStateService extends AbstractService<OrderState> {
 			],
 			[13, 14],
 			[],
-			[13],
-			http)
+			[13])
 	}
 }
 
 @Injectable()
 export class OrderService extends AbstractService<Order> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'order',
-			'orders',
+			http, apiService, 'order', 'orders',
 			[
 				'id_address_delivery' /* [0] */,
 				'id_address_invoice' /* [1] */,
@@ -1018,17 +964,15 @@ export class OrderService extends AbstractService<Order> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 5, 6, 8, 20, 28, 31, 32, 33, 43],
-			http)
+			[0, 1, 2, 3, 4, 5, 6, 8, 20, 28, 31, 32, 33, 43])
 	}
 }
 
 @Injectable()
 export class PriceRangeService extends AbstractService<PriceRange> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'price_range',
-			'price_ranges',
+			http, apiService, 'price_range', 'price_ranges',
 			[
 				'id_carrier' /* [0] */,
 				'delimiter1' /* [1] */,
@@ -1036,17 +980,15 @@ export class PriceRangeService extends AbstractService<PriceRange> {
 			],
 			[],
 			[],
-			[0, 1, 2],
-			http)
+			[0, 1, 2])
 	}
 }
 
 @Injectable()
 export class CustomizationFieldService extends AbstractService<CustomizationField> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'customization_field',
-			'product_customization_fields',
+			http, apiService, 'customization_field', 'product_customization_fields',
 			[
 				'id_product' /* [0] */,
 				'type' /* [1] */,
@@ -1055,17 +997,15 @@ export class CustomizationFieldService extends AbstractService<CustomizationFiel
 			],
 			[3],
 			[],
-			[0, 1, 2, 3],
-			http)
+			[0, 1, 2, 3])
 	}
 }
 
 @Injectable()
 export class ProductFeatureValueService extends AbstractService<ProductFeatureValue> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'product_feature_value',
-			'product_feature_values',
+			http, apiService, 'product_feature_value', 'product_feature_values',
 			[
 				'id_feature' /* [0] */,
 				'custom',
@@ -1073,34 +1013,30 @@ export class ProductFeatureValueService extends AbstractService<ProductFeatureVa
 			],
 			[2],
 			[],
-			[0, 2],
-			http)
+			[0, 2])
 	}
 }
 
 @Injectable()
 export class ProductFeatureService extends AbstractService<ProductFeature> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'product_feature',
-			'product_features',
+			http, apiService, 'product_feature', 'product_features',
 			[
 				'position',
 				'name' /* [1] */
 			],
 			[1],
 			[],
-			[1],
-			http)
+			[1])
 	}
 }
 
 @Injectable()
 export class ProductOptionValueService extends AbstractService<ProductOptionValue> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'product_option_value',
-			'product_option_values',
+			http, apiService, 'product_option_value', 'product_option_values',
 			[
 				'id_attribute_group' /* [0] */,
 				'color',
@@ -1109,17 +1045,15 @@ export class ProductOptionValueService extends AbstractService<ProductOptionValu
 			],
 			[3],
 			[],
-			[0, 3],
-			http)
+			[0, 3])
 	}
 }
 
 @Injectable()
 export class ProductOptionService extends AbstractService<ProductOption> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'product_option',
-			'product_options',
+			http, apiService, 'product_option', 'product_options',
 			[
 				'is_color_group',
 				'group_type' /* [1] */,
@@ -1129,17 +1063,15 @@ export class ProductOptionService extends AbstractService<ProductOption> {
 			],
 			[3, 4],
 			[],
-			[1, 3, 4],
-			http)
+			[1, 3, 4])
 	}
 }
 
 @Injectable()
 export class ProductSupplierService extends AbstractService<ProductSupplier> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'product_supplier',
-			'product_suppliers',
+			http, apiService, 'product_supplier', 'product_suppliers',
 			[
 				'id_product' /* [0] */,
 				'id_product_attribute' /* [1] */,
@@ -1150,17 +1082,15 @@ export class ProductSupplierService extends AbstractService<ProductSupplier> {
 			],
 			[],
 			[],
-			[0, 1, 2],
-			http)
+			[0, 1, 2])
 	}
 }
 
 @Injectable()
 export class ProductService extends AbstractService<Product> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'product',
-			'products',
+			http, apiService, 'product', 'products',
 			[
 				'id_manufacturer',
 				'id_supplier',
@@ -1225,17 +1155,15 @@ export class ProductService extends AbstractService<Product> {
 			],
 			[51, 52, 53, 54, 55, 56, 57, 58, 59],
 			[9, 10],
-			[30, 54, 55],
-			http)
+			[30, 54, 55])
 	}
 }
 
 @Injectable()
 export class ShopGroupService extends AbstractService<ShopGroup> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'shop_group',
-			'shop_groups',
+			http, apiService, 'shop_group', 'shop_groups',
 			[
 				'name' /* [0] */,
 				'share_customer',
@@ -1246,17 +1174,15 @@ export class ShopGroupService extends AbstractService<ShopGroup> {
 			],
 			[],
 			[],
-			[0],
-			http)
+			[0])
 	}
 }
 
 @Injectable()
 export class ShopUrlService extends AbstractService<ShopUrl> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'shop_url',
-			'shop_urls',
+			http, apiService, 'shop_url', 'shop_urls',
 			[
 				'id_shop' /* [0] */,
 				'active',
@@ -1268,17 +1194,15 @@ export class ShopUrlService extends AbstractService<ShopUrl> {
 			],
 			[],
 			[],
-			[0, 3],
-			http)
+			[0, 3])
 	}
 }
 
 @Injectable()
 export class ShopService extends AbstractService<Shop> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'shop',
-			'shops',
+			http, apiService, 'shop', 'shops',
 			[
 				'id_shop_group' /* [0] */,
 				'id_category' /* [1] */,
@@ -1289,17 +1213,15 @@ export class ShopService extends AbstractService<Shop> {
 			],
 			[],
 			[],
-			[0, 1, 2, 5],
-			http)
+			[0, 1, 2, 5])
 	}
 }
 
 @Injectable()
 export class SpecificPriceRuleService extends AbstractService<SpecificPriceRule> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'specific_price_rule',
-			'specific_price_rules',
+			http, apiService, 'specific_price_rule', 'specific_price_rules',
 			[
 				'id_shop' /* [0] */,
 				'id_country' /* [1] */,
@@ -1316,17 +1238,15 @@ export class SpecificPriceRuleService extends AbstractService<SpecificPriceRule>
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-			http)
+			[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 	}
 }
 
 @Injectable()
 export class SpecificPriceService extends AbstractService<SpecificPrice> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'specific_price',
-			'specific_prices',
+			http, apiService, 'specific_price', 'specific_prices',
 			[
 				'id_shop_group',
 				'id_shop' /* [1] */,
@@ -1348,17 +1268,15 @@ export class SpecificPriceService extends AbstractService<SpecificPrice> {
 			],
 			[],
 			[],
-			[1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16],
-			http)
+			[1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16])
 	}
 }
 
 @Injectable()
 export class StateService extends AbstractService<State> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'state',
-			'states',
+			http, apiService, 'state', 'states',
 			[
 				'id_zone' /* [0] */,
 				'id_country' /* [1] */,
@@ -1368,17 +1286,15 @@ export class StateService extends AbstractService<State> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3],
-			http)
+			[0, 1, 2, 3])
 	}
 }
 
 @Injectable()
 export class StockAvailableService extends AbstractService<StockAvailable> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'stock_available',
-			'stock_availables',
+			http, apiService, 'stock_available', 'stock_availables',
 			[
 				'id_product' /* [0] */,
 				'id_product_attribute' /* [1] */,
@@ -1390,17 +1306,15 @@ export class StockAvailableService extends AbstractService<StockAvailable> {
 			],
 			[],
 			[],
-			[0, 1, 4, 5, 6],
-			http)
+			[0, 1, 4, 5, 6])
 	}
 }
 
 @Injectable()
 export class StockMovementReasonService extends AbstractService<StockMovementReason> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'stock_movement_reason',
-			'stock_movement_reasons',
+			http, apiService, 'stock_movement_reason', 'stock_movement_reasons',
 			[
 				'sign',
 				'deleted',
@@ -1410,17 +1324,15 @@ export class StockMovementReasonService extends AbstractService<StockMovementRea
 			],
 			[4],
 			[],
-			[4],
-			http)
+			[4])
 	}
 }
 
 @Injectable()
 export class StockMvtService extends AbstractService<StockMvt> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'stock_mvt',
-			'stock_movements',
+			http, apiService, 'stock_mvt', 'stock_movements',
 			[
 				'id_product',
 				'id_product_attribute',
@@ -1445,17 +1357,15 @@ export class StockMvtService extends AbstractService<StockMvt> {
 			],
 			[10],
 			[],
-			[5, 6, 7, 14, 15, 18, 19],
-			http)
+			[5, 6, 7, 14, 15, 18, 19])
 	}
 }
 
 @Injectable()
 export class StockService extends AbstractService<Stock> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'stock',
-			'stocks',
+			http, apiService, 'stock', 'stocks',
 			[
 				'id_warehouse' /* [0] */,
 				'id_product' /* [1] */,
@@ -1470,17 +1380,15 @@ export class StockService extends AbstractService<Stock> {
 			],
 			[],
 			[3],
-			[0, 1, 2, 7, 8, 9],
-			http)
+			[0, 1, 2, 7, 8, 9])
 	}
 }
 
 @Injectable()
 export class StoreService extends AbstractService<Store> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'store',
-			'stores',
+			http, apiService, 'store', 'stores',
 			[
 				'id_country' /* [0] */,
 				'id_state',
@@ -1502,17 +1410,15 @@ export class StoreService extends AbstractService<Store> {
 			],
 			[],
 			[],
-			[0, 3, 4, 7, 14],
-			http)
+			[0, 3, 4, 7, 14])
 	}
 }
 
 @Injectable()
 export class SupplierService extends AbstractService<Supplier> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'supplier',
-			'suppliers',
+			http, apiService, 'supplier', 'suppliers',
 			[
 				'link_rewrite',
 				'name' /* [1] */,
@@ -1526,17 +1432,15 @@ export class SupplierService extends AbstractService<Supplier> {
 			],
 			[5, 6, 7, 8],
 			[],
-			[1],
-			http)
+			[1])
 	}
 }
 
 @Injectable()
 export class SupplyOrderDetailService extends AbstractService<SupplyOrderDetail> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'supply_order_detail',
-			'supply_order_details',
+			http, apiService, 'supply_order_detail', 'supply_order_details',
 			[
 				'id_supply_order' /* [0] */,
 				'id_product' /* [1] */,
@@ -1562,17 +1466,15 @@ export class SupplyOrderDetailService extends AbstractService<SupplyOrderDetail>
 			],
 			[],
 			[],
-			[0, 1, 2, 5, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-			http)
+			[0, 1, 2, 5, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 	}
 }
 
 @Injectable()
 export class SupplyOrderHistoryService extends AbstractService<SupplyOrderHistory> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'supply_order_history',
-			'supply_order_histories',
+			http, apiService, 'supply_order_history', 'supply_order_histories',
 			[
 				'id_supply_order' /* [0] */,
 				'id_employee' /* [1] */,
@@ -1583,17 +1485,15 @@ export class SupplyOrderHistoryService extends AbstractService<SupplyOrderHistor
 			],
 			[],
 			[],
-			[0, 1, 2, 5],
-			http)
+			[0, 1, 2, 5])
 	}
 }
 
 @Injectable()
 export class SupplyOrderReceiptHistoryService extends AbstractService<SupplyOrderReceiptHistory> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'supply_order_receipt_history',
-			'supply_order_receipt_histories',
+			http, apiService, 'supply_order_receipt_history', 'supply_order_receipt_histories',
 			[
 				'id_supply_order_detail' /* [0] */,
 				'id_employee' /* [1] */,
@@ -1605,17 +1505,15 @@ export class SupplyOrderReceiptHistoryService extends AbstractService<SupplyOrde
 			],
 			[],
 			[],
-			[0, 1, 2, 5],
-			http)
+			[0, 1, 2, 5])
 	}
 }
 
 @Injectable()
 export class SupplyOrderStateService extends AbstractService<SupplyOrderState> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'supply_order_state',
-			'supply_order_states',
+			http, apiService, 'supply_order_state', 'supply_order_states',
 			[
 				'delivery_note',
 				'editable',
@@ -1627,17 +1525,15 @@ export class SupplyOrderStateService extends AbstractService<SupplyOrderState> {
 			],
 			[6],
 			[],
-			[6],
-			http)
+			[6])
 	}
 }
 
 @Injectable()
 export class SupplyOrderService extends AbstractService<SupplyOrder> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'supply_order',
-			'supply_orders',
+			http, apiService, 'supply_order', 'supply_orders',
 			[
 				'id_supplier' /* [0] */,
 				'id_lang' /* [1] */,
@@ -1659,34 +1555,30 @@ export class SupplyOrderService extends AbstractService<SupplyOrder> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 6, 7],
-			http)
+			[0, 1, 2, 3, 4, 6, 7])
 	}
 }
 
 @Injectable()
 export class TagService extends AbstractService<Tag> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'tag',
-			'tags',
+			http, apiService, 'tag', 'tags',
 			[
 				'id_lang' /* [0] */,
 				'name' /* [1] */
 			],
 			[],
 			[],
-			[0, 1],
-			http)
+			[0, 1])
 	}
 }
 
 @Injectable()
 export class TaxRuleGroupService extends AbstractService<TaxRuleGroup> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'tax_rule_group',
-			'tax_rule_groups',
+			http, apiService, 'tax_rule_group', 'tax_rule_groups',
 			[
 				'name' /* [0] */,
 				'active',
@@ -1696,17 +1588,15 @@ export class TaxRuleGroupService extends AbstractService<TaxRuleGroup> {
 			],
 			[],
 			[],
-			[0],
-			http)
+			[0])
 	}
 }
 
 @Injectable()
 export class TaxRuleService extends AbstractService<TaxRule> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'tax_rule',
-			'tax_rules',
+			http, apiService, 'tax_rule', 'tax_rules',
 			[
 				'id_tax_rules_group' /* [0] */,
 				'id_state',
@@ -1719,17 +1609,15 @@ export class TaxRuleService extends AbstractService<TaxRule> {
 			],
 			[],
 			[],
-			[0, 2, 5],
-			http)
+			[0, 2, 5])
 	}
 }
 
 @Injectable()
 export class TaxService extends AbstractService<Tax> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'tax',
-			'taxes',
+			http, apiService, 'tax', 'taxes',
 			[
 				'rate' /* [0] */,
 				'active',
@@ -1738,17 +1626,15 @@ export class TaxService extends AbstractService<Tax> {
 			],
 			[3],
 			[],
-			[0, 3],
-			http)
+			[0, 3])
 	}
 }
 
 @Injectable()
 export class TranslatedConfigurationService extends AbstractService<TranslatedConfiguration> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'translated_configuration',
-			'translated_configurations',
+			http, apiService, 'translated_configuration', 'translated_configurations',
 			[
 				'value' /* [0] */,
 				'date_add',
@@ -1759,17 +1645,15 @@ export class TranslatedConfigurationService extends AbstractService<TranslatedCo
 			],
 			[0],
 			[],
-			[3],
-			http)
+			[3])
 	}
 }
 
 @Injectable()
 export class WarehouseProductLocationService extends AbstractService<WarehouseProductLocation> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'warehouse_product_location',
-			'warehouse_product_locations',
+			http, apiService, 'warehouse_product_location', 'warehouse_product_locations',
 			[
 				'id_product' /* [0] */,
 				'id_product_attribute' /* [1] */,
@@ -1778,17 +1662,15 @@ export class WarehouseProductLocationService extends AbstractService<WarehousePr
 			],
 			[],
 			[],
-			[0, 1, 2],
-			http)
+			[0, 1, 2])
 	}
 }
 
 @Injectable()
 export class WarehouseService extends AbstractService<Warehouse> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'warehouse',
-			'warehouses',
+			http, apiService, 'warehouse', 'warehouses',
 			[
 				'id_address' /* [0] */,
 				'id_employee' /* [1] */,
@@ -1801,17 +1683,15 @@ export class WarehouseService extends AbstractService<Warehouse> {
 			],
 			[],
 			[3],
-			[0, 1, 2, 5, 6, 7],
-			http)
+			[0, 1, 2, 5, 6, 7])
 	}
 }
 
 @Injectable()
 export class WeightRangeService extends AbstractService<WeightRange> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'weight_range',
-			'weight_ranges',
+			http, apiService, 'weight_range', 'weight_ranges',
 			[
 				'id_carrier' /* [0] */,
 				'delimiter1' /* [1] */,
@@ -1819,24 +1699,21 @@ export class WeightRangeService extends AbstractService<WeightRange> {
 			],
 			[],
 			[],
-			[0, 1, 2],
-			http)
+			[0, 1, 2])
 	}
 }
 
 @Injectable()
 export class ZoneService extends AbstractService<Zone> {
-	constructor(http: Http) {
+	constructor(http: Http, apiService: APIService) {
 		super(
-			'zone',
-			'zones',
+			http, apiService, 'zone', 'zones',
 			[
 				'name' /* [0] */,
 				'active'
 			],
 			[],
 			[],
-			[0],
-			http)
+			[0])
 	}
 }
