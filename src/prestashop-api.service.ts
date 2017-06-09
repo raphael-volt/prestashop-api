@@ -1,15 +1,85 @@
 import { Injectable } from '@angular/core'
 import {
-  Http,
-  Request,
-  RequestMethod,
-  Response
+	Http,
+	Request,
+	RequestMethod,
+	Response
 } from '@angular/http'
 import { Observer, Observable } from 'rxjs'
+import { RequestService } from "./core/request";
 
+interface APIMethods {
+	get: boolean
+	post: boolean
+	put: boolean
+	delete: boolean
+}
+
+class ResourcesMethods {
+	[resource: string]: APIMethods
+}
 @Injectable()
 export class APIService {
+	private _requestService: RequestService
+	private _connected: boolean
+	private _resourcesMethods: ResourcesMethods
+	constructor(
+		protected http: Http,
+		requestService: RequestService) { 
+			this._requestService = requestService
+		}
 
+	get requestService(): RequestService {
+		return this._requestService
+	}
+
+	get connected(): boolean {
+		return this._connected
+	}
+
+	connect(url: string, key: string): Observable<boolean> {
+		return Observable.create((observer: Observer<boolean>) => {
+			const request = this._requestService.apiConfigurationRequest(url, key)
+			this.http.request(request).subscribe(result => {
+				const json = result.json()
+				this._resourcesMethods = json.api
+				this._connected = true
+				observer.next(true)
+			},
+			error => {
+				observer.next(false)
+			})
+		})
+	}
+
+	isMethodAllowed(resource: string, method: RequestMethod): boolean {
+		if(this._resourcesMethods[resource]) {
+			let m: string
+			switch (method) {
+				case RequestMethod.Get:
+					m = "get"
+					break
+					
+				case RequestMethod.Delete:
+					m = "delete"
+					break
+				
+				case RequestMethod.Post:
+					m = "post"
+					break
+				
+				case RequestMethod.Put:
+					m = "put"
+					break
+				
+				default:
+					break;
+			}
+			if(m)
+				return this._resourcesMethods[resource][m]
+		}
+		return false
+	}
 }
 
 import { PSObject } from './core/model'
@@ -23,7 +93,7 @@ abstract class AbstractService<T extends PSObject> {
 		protected properties: string[],
 		protected translatableIndexes: number[],
 		protected readonlyIndexes: number[],
-		protected requiredIndexes: number[]) { 
+		protected requiredIndexes: number[]) {
 
 	}
 
