@@ -69,6 +69,7 @@ import {
 	WeightRangeService,
 	ZoneService
 } from './prestashop-api.service'
+import { RequestService } from "./core/request";
 @NgModule({
     imports: [
         CommonModule,
@@ -76,6 +77,7 @@ import {
     ],
     providers: [
 		APIService,
+		RequestService,
 		AddressService,
 		CarrierService,
 		CartRuleService,
