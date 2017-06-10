@@ -12,4 +12,9 @@ $ npm install prestashop-api --save
 
 MIT © [Raphael Volt](mailto:raphael.ketmie@gmail.com)
 
+## Karma
 
+Delete generated js files by the `karma-typescript-angular2-transform` plugin :
+```
+. clean-js.sh
+```

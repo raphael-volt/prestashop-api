@@ -1,0 +1,1 @@
+find src -name "*.js" -delete && rm base.spec.js
