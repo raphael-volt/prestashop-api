@@ -28,5 +28,15 @@ Desktop.ini
 # Ngc generated files
 **/*.ngfactory.ts
 
+# Karma transform
+base.spec.js
+src/**/*.js
+
+# angular-cli-tools
+angular-cli-tools
+
+# coverage ?
+coverage
+
 # Build files
 dist/*
