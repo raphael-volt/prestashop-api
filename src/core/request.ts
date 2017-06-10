@@ -19,6 +19,24 @@ export class RequestService {
 
     constructor() { }
 
+    search(resource: string, params: APIParameters): Request {
+        return this.request(
+            this.resourceUrl(resource),
+            RequestMethod.Get,
+            params
+        )
+    }
+    
+    resource(resource: string, id: string, id_language: string): Request {
+        let params: APIParameters = new APIParameters()
+        params.id_language = id_language
+        return this.request(
+            this.resourceUrl(resource, id),
+            RequestMethod.Get,
+            params
+        )
+    }
+
     request(
         url: string,
         method: RequestMethod,
@@ -34,15 +52,10 @@ export class RequestService {
         return btoa(data + ":")
     }
 
-    apiConfigurationRequest(url: string, key?: string, authData?: string): Request {
-        if (!key && !authData)
-            throw "key or authData is required"
-
-        if (!authData)
-            authData = this.getAuthData(key)
+    apiConfigurationRequest(url: string, key: string): Request {
         
         this._url = url
-        this._authData = authData
+        this._authData = this.getAuthData(key)
 
         return new Request({
             url: this.buildUrl([]),
