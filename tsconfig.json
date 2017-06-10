@@ -13,6 +13,14 @@
       "dom"
     ],
     "skipLibCheck": true,
-    "types": []
-  }
+    "types": [
+      "jasmine",
+      "node"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "angular-cli-tools",
+    "tools"
+  ]
 }
