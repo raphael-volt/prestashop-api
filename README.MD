@@ -70,3 +70,11 @@ $ npm run lint
 ## License
 
 MIT © [Raphael Volt](mailto:raphael.ketmie@gmail.com)
+
+
+## NGT
+
+Delete all `index.ts`
+```
+find -name index.ts -exec rm {} \;
+```
