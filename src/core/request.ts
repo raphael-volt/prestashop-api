@@ -82,10 +82,12 @@ export class RequestService {
         if (!this._headers) {
             this._headers = new Headers(this.getAuthHeaders(this._authData))
         }
+        /*
         else {
             if(this._authData != this._headers.get(this._AUTHORIZATION))
                 this._headers.set(this._AUTHORIZATION, this._authData)
         }
+        */
         return this._headers
     }
 
