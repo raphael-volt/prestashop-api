@@ -176,7 +176,7 @@ export class APIService {
 
 import { PSObject } from './core/model'
 
-abstract class AbstractService<T extends PSObject> {
+export abstract class AbstractService<T extends PSObject> {
 	constructor(
 		protected http: Http,
 		protected apiService: APIService,
