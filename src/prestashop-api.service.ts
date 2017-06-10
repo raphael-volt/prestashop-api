@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core'
+import { Injectable, EventEmitter } from '@angular/core'
 import {
 	Http,
 	Request,
@@ -6,7 +6,13 @@ import {
 	Response
 } from '@angular/http'
 import { Observer, Observable } from 'rxjs'
-import { RequestService } from "./core/request";
+import 'rxjs/add/operator/map'
+import {
+	RequestService,
+	APIParameters,
+	APIParametersNames,
+	APIParametersValues
+} from "./core/request";
 
 interface APIMethods {
 	get: boolean
@@ -15,6 +21,11 @@ interface APIMethods {
 	delete: boolean
 }
 
+const ID: string = "id"
+const LANGUAGE: string = "language"
+const LANGUAGES: string = "languages"
+const ASSOCIATIONS: string = "associations"
+const PRESTASHOP: string = "prestashop"
 class ResourcesMethods {
 	[resource: string]: APIMethods
 }
@@ -25,9 +36,45 @@ export class APIService {
 	private _resourcesMethods: ResourcesMethods
 	constructor(
 		protected http: Http,
-		requestService: RequestService) { 
-			this._requestService = requestService
+		requestService: RequestService) {
+		this._requestService = requestService
+	}
+
+	private _languages: Language[] = null
+	get languages(): Language[] {
+		return this._languages
+	}
+
+	id_languageChange: EventEmitter<string> = new EventEmitter<string>()
+
+	private _id_language: string | null = null
+	get id_language(): string {
+		return this._id_language
+	}
+
+	set id_language(value: string) {
+		let error: string = null
+		if (!this._languages) {
+			error = "The language list is not available"
 		}
+		else {
+			let found = false
+			for (let language of this._languages) {
+				if (language.id == value) {
+					found = true
+					break
+				}
+			}
+			if (!found) {
+				error = "Language not found"
+			}
+		}
+		if (error)
+			throw new Error(error)
+		this._id_language = value
+		this.id_languageChange.emit(value)
+	}
+
 
 	get requestService(): RequestService {
 		return this._requestService
@@ -39,43 +86,88 @@ export class APIService {
 
 	connect(url: string, key: string): Observable<boolean> {
 		return Observable.create((observer: Observer<boolean>) => {
-			const request = this._requestService.apiConfigurationRequest(url, key)
-			this.http.request(request).subscribe(result => {
-				const json = result.json()
+			this.http.request(this._requestService.apiConfigurationRequest(url, key)).subscribe(response => {
+				const json = response.json()
 				this._resourcesMethods = json.api
 				this._connected = true
-				observer.next(true)
+				this.getLanguages().subscribe(languages => {
+					observer.next(true)
+				},
+					observer.error)
 			},
-			error => {
-				observer.next(false)
-			})
+				error => {
+					observer.next(false)
+				})
 		})
 	}
 
-	isMethodAllowed(resource: string, method: RequestMethod): boolean {
-		if(this._resourcesMethods[resource]) {
-			let m: string
-			switch (method) {
-				case RequestMethod.Get:
-					m = "get"
-					break
-					
-				case RequestMethod.Delete:
-					m = "delete"
-					break
-				
-				case RequestMethod.Post:
-					m = "post"
-					break
-				
-				case RequestMethod.Put:
-					m = "put"
-					break
-				
-				default:
-					break;
+	getLanguages(): Observable<Language[]> {
+		return Observable.create((observer: Observer<Language[]>) => {
+			const resource = LANGUAGES
+			if (this._languages) {
+				observer.next(this._languages)
+				return
 			}
-			if(m)
+			let params: APIParameters = new APIParameters()
+			params.display = APIParametersValues.full
+			this.http.request(
+				this.requestService.request(
+					this.requestService.resourceUrl(resource),
+					RequestMethod.Get,
+					params
+				)
+			).subscribe(response => {
+				if (!response.ok) {
+					observer.error("Request FAIL")
+					return
+				}
+				this._languages = response.json()[resource]
+				for (let language of this._languages) {
+					if (language.active) {
+						this._id_language = language.id
+						break
+					}
+				}
+				if (!this._id_language) {
+					observer.error(new Error("There is not active language"))
+				}
+				else {
+					observer.next(this._languages)
+				}
+			},
+				observer.error)
+		})
+	}
+
+	getMethodAsString(method: RequestMethod): string {
+		let m: string
+		switch (method) {
+			case RequestMethod.Get:
+				m = "get"
+				break
+
+			case RequestMethod.Delete:
+				m = "delete"
+				break
+
+			case RequestMethod.Post:
+				m = "post"
+				break
+
+			case RequestMethod.Put:
+				m = "put"
+				break
+
+			default:
+				break;
+		}
+		return m
+	}
+
+	isMethodAllowed(resource: string, method: RequestMethod): boolean {
+		if (this._resourcesMethods[resource]) {
+			const m: string = this.getMethodAsString(method)
+			if (m)
 				return this._resourcesMethods[resource][m]
 		}
 		return false
@@ -93,12 +185,262 @@ abstract class AbstractService<T extends PSObject> {
 		protected properties: string[],
 		protected translatableIndexes: number[],
 		protected readonlyIndexes: number[],
-		protected requiredIndexes: number[]) {
-
-	}
+		protected requiredIndexes: number[],
+		protected associations: { [name: string]: { [nodeName: string]: string[] } }
+	) { }
 
 	createInstance(id: string | null): T {
 		return <T>{ id: id }
+	}
+
+	get(id: string): Observable<T | any> {
+		const unallowed = this.checkConnectionAndMeyhodIsAllowed(RequestMethod.Get)
+		if (unallowed)
+			return unallowed
+		let params = this.apiParameters
+		return this.http.request(
+			this.requestService.resource(this.resource, id, this.id_language)
+		).map(response => {
+			const json = response.json()
+			return json[this.nodename][0]
+		})
+	}
+
+	search(parameters: APIParameters): Observable<T[] | any> {
+		const unallowed = this.checkConnectionAndMeyhodIsAllowed(RequestMethod.Get)
+		if (unallowed)
+			return unallowed
+		return this.http.request(this.requestService.search(this.resource, parameters)).map(response => {
+			return response.json()[this.resource]
+		})
+	}
+
+	put(input: T | T[]): Observable<T | T[] | any> {
+		return this.send(input, RequestMethod.Put)
+	}
+
+	post(input: T | T[]): Observable<T | T[] | any> {
+		return this.send(input, RequestMethod.Post)
+	}
+
+	delete(id: string | string[]): Observable<boolean | any> {
+		const method: RequestMethod = RequestMethod.Post
+		const unallowed = this.checkConnectionAndMeyhodIsAllowed(method)
+		if (unallowed)
+			return unallowed
+		let ids: string[]
+		if (id instanceof Array)
+			ids = id
+		else
+			ids = [id]
+		let params: APIParameters = new APIParameters()
+		params.set(ID, "[" + ids.join(",") + "]")
+		params.set(APIParametersNames[APIParametersNames.ps_method], APIParametersValues[APIParametersValues.DELETE])
+		return this.http.request(this.requestService.request(
+			this.requestService.resourceUrl(this.resource),
+			method,
+			params
+		)).map(response => { return response.ok })
+	}
+
+	isTranslatable(propertie: string): boolean {
+		let i: number = this.properties.indexOf(propertie)
+		return this.translatableIndexes.indexOf(i) != -1
+	}
+
+	isWritable(propertie: string): boolean {
+		let i: number = this.properties.indexOf(propertie)
+		return this.readonlyIndexes.indexOf(i) == -1
+
+	}
+
+	isRequired(propertie: string): boolean {
+		let i: number = this.properties.indexOf(propertie)
+		return this.requiredIndexes.indexOf(i) != -1
+	}
+
+	serialize(input: T | T[], method: RequestMethod): string | Error {
+		let output: string[] = []
+		let data: string | Error
+		let inputs: T[]
+		if (input instanceof Array)
+			inputs = input
+		else
+			inputs = [input]
+		for (let item of inputs) {
+			data = this.serializeInstance(item, method)
+			if (data instanceof Error)
+				return data
+			output.push(data)
+		}
+		return `<${PRESTASHOP}>
+${output.join("\n")}
+</${PRESTASHOP}>`
+	}
+
+	private send(input: T | T[], method: RequestMethod): Observable<T | T[] |  any> {
+		const unallowed = this.checkConnectionAndMeyhodIsAllowed(method)
+		if (unallowed)
+			return unallowed
+		let array: T[]
+		if (input instanceof Array)
+			array = input
+		else
+			array = [input]
+		const body: string | Error = this.serialize(input, method)
+		if (body instanceof Error) {
+			return this.getErrorObservable(body.message)
+		}
+		return this.http.request(
+			this.requestService.request(
+				this.requestService.resourceUrl(this.resource),
+				method,
+				this.apiParameters,
+				body
+			)
+		).map(response => {
+			let resources = response.json()[this.resource]
+			if (method == RequestMethod.Post) {
+				const n: number = array.length
+				for (let i = 0; i < n; i++) {
+					input[i].id = resources[i].id
+				}
+			}
+			return resources
+		})
+	}
+
+	private get requestService(): RequestService {
+		return this.apiService.requestService
+	}
+
+	private get id_language(): string {
+		return this.apiService.id_language
+	}
+
+	private get apiParameters(): APIParameters {
+		let params: APIParameters = new APIParameters()
+		params.id_language = this.id_language
+		return params
+	}
+
+
+	private getErrorObservable(error: string): Observable<any> {
+		return Observable.create(observer => {
+			observer.error(error)
+		})
+	}
+
+	private checkConnectionAndMeyhodIsAllowed(method: RequestMethod): null | Observable<any> {
+		let error: string = null
+		if (!this.apiService.connected)
+			error = "The APIService is not connected"
+		else if (!this.apiService.isMethodAllowed(this.resource, method))
+			error = "Method " + this.apiService.getMethodAsString(method).toUpperCase() + " is not allowed for resource '" + this.resource + "'"
+		if (error) {
+			return this.getErrorObservable(error)
+		}
+		return null
+	}
+
+	private serializeValue(value: any): string {
+		if (value == undefined || value == null)
+			value = ""
+		return String(value).trim()
+	}
+
+	private hasProperties(item: Object, properties: string[]): string[] {
+		let missing: string[] = []
+		for (let property of properties) {
+			if (!item.hasOwnProperty(property))
+				missing.push(property)
+		}
+		return missing
+	}
+
+	private serializeInstance(instance: T, method: RequestMethod): string | Error {
+		
+		let properties: string[] = this.properties.slice()
+		if (this.associations)
+			properties.push(ASSOCIATIONS)
+		if (method == RequestMethod.Put)
+			properties.push(ID)
+		properties = this.hasProperties(instance, properties)
+		if (properties.length)
+			return new Error(`[Serialization FAIL] missing properties : [${properties.join(",")}]`)
+		
+		let i, j, k: any
+		let p: string
+		let required: string[] = []
+		for (i of this.requiredIndexes) {
+			p = this.properties[i]
+			if (!instance[p] || !String(instance[p]).length || !String(instance[p]).trim().length) {
+				required.push(p)
+			}
+		}
+		if (required.length)
+			return new Error(`[Serialization FAIL] required properties not set : [${required.join(",")}]`)
+
+		const nodeName = this.nodename
+		let xml: string[] = [`<${nodeName}>`]
+		p = this.serializeValue(instance[ID]) 
+		if (method == RequestMethod.Put) {
+			if(p != "")
+				xml.push(`<${ID}>${instance.id}</${ID}>`)
+			else
+				return new Error(`[Serialization FAIL] value of property ${ID} must be set for the PUT method`)
+				
+		}
+		else {
+			if(p != "")
+				return new Error(`[Serialization FAIL] value of property ${ID} must be empty for the POST method`)
+		}
+		const l: string = LANGUAGE
+		const lid: string = this.apiService.id_language
+		for (p of this.properties) {
+			if (!this.isWritable(p)) {
+				continue
+			}
+			if (this.isTranslatable(p)) {
+				xml.push(`<${p}><${l} ${ID}="${lid}">${this.serializeValue(instance[p])}</${l}></${p}>`)
+				continue
+			}
+			xml.push(`<${p}>${this.serializeValue(instance[p])}</${p}>`)
+		}
+		let asso: any
+		let items: any[]
+		if (this.associations) {
+			asso = instance[ASSOCIATIONS]
+			p = ASSOCIATIONS
+			xml.push(`<${p}>`)
+			let itemProperties: string[]
+			for (let assoName in this.associations) {
+				if(this.hasProperties(asso, [assoName]).length)
+					continue
+				
+				xml.push(`<${assoName}>`)
+				for (let assoNodeName in this.associations[assoName]) {
+					items = asso[assoName]
+					if(! items.length)
+						continue
+					xml.push(`<${assoNodeName}>`)
+					itemProperties = this.associations[assoName][assoNodeName]
+					for (let item of asso[assoName]) {
+						properties = this.hasProperties(item, itemProperties)
+						if (properties.length)
+							return new Error(`[Serialization FAIL] missing ${p}.${assoName}.${assoNodeName} properties : [${properties.join(",")}]`)
+						for (let ip of itemProperties) {
+							xml.push(`<${ip}>${this.serializeValue(item[ip])}</${ip}>`)
+						}
+					}
+					xml.push(`</${assoNodeName}>`)
+				}
+				xml.push(`</${assoName}>`)
+			}
+			xml.push(`</${p}>`)
+		}
+		xml.push(`</${nodeName}>`)
+		return xml.join("\n")
 	}
 }
 
@@ -201,7 +543,9 @@ export class AddressService extends AbstractService<Address> {
 			],
 			[],
 			[],
-			[4, 6, 8, 9, 11, 14])
+			[4, 6, 8, 9, 11, 14],
+			null
+		)
 	}
 }
 
@@ -235,7 +579,9 @@ export class CarrierService extends AbstractService<Carrier> {
 			],
 			[20],
 			[],
-			[4, 5, 20])
+			[4, 5, 20],
+			null
+		)
 	}
 }
 
@@ -280,7 +626,9 @@ export class CartRuleService extends AbstractService<CartRule> {
 			],
 			[31],
 			[],
-			[1, 2, 31])
+			[1, 2, 31],
+			null
+		)
 	}
 }
 
@@ -311,7 +659,11 @@ export class CartService extends AbstractService<Cart> {
 			],
 			[],
 			[],
-			[2, 5])
+			[2, 5],
+			{
+				cart_rows: { cart_row: ["id_product", "id_product_attribute", "id_address_delivery", "quantity"] }
+			}
+		)
 	}
 }
 
@@ -339,7 +691,12 @@ export class CategoryService extends AbstractService<Category> {
 			],
 			[9, 10, 11, 12, 13, 14],
 			[1, 2],
-			[3, 9, 10])
+			[3, 9, 10],
+			{
+				categories: { category: ["id"] },
+				products: { product: ["id"] }
+			}
+		)
 	}
 }
 
@@ -367,7 +724,12 @@ export class CombinationService extends AbstractService<Combination> {
 			],
 			[],
 			[],
-			[0, 12])
+			[0, 12],
+			{
+				product_option_values: { product_option_value: ["id"] },
+				images: { image: ["id"] }
+			}
+		)
 	}
 }
 
@@ -386,7 +748,9 @@ export class ConfigurationService extends AbstractService<Configuration> {
 			],
 			[],
 			[],
-			[1])
+			[1],
+			null
+		)
 	}
 }
 
@@ -403,7 +767,9 @@ export class ContactService extends AbstractService<Contact> {
 			],
 			[2, 3],
 			[],
-			[2])
+			[2],
+			null
+		)
 	}
 }
 
@@ -425,7 +791,9 @@ export class ContentService extends AbstractService<Content> {
 			],
 			[4, 5, 6, 7, 8],
 			[],
-			[6, 7])
+			[6, 7],
+			null
+		)
 	}
 }
 
@@ -449,7 +817,9 @@ export class CountryService extends AbstractService<Country> {
 			],
 			[10],
 			[],
-			[0, 3, 5, 6, 9, 10])
+			[0, 3, 5, 6, 9, 10],
+			null
+		)
 	}
 }
 
@@ -472,7 +842,9 @@ export class CurrencyService extends AbstractService<Currency> {
 			],
 			[],
 			[],
-			[0, 1, 4, 5, 6, 7])
+			[0, 1, 4, 5, 6, 7],
+			null
+		)
 	}
 }
 
@@ -495,7 +867,9 @@ export class CustomerMessageService extends AbstractService<CustomerMessage> {
 			],
 			[],
 			[],
-			[3])
+			[3],
+			null
+		)
 	}
 }
 
@@ -519,7 +893,11 @@ export class CustomerThreadService extends AbstractService<CustomerThread> {
 			],
 			[],
 			[],
-			[0, 5, 7])
+			[0, 5, 7],
+			{
+				customer_messages: { customer_message: ["id"] }
+			}
+		)
 	}
 }
 
@@ -562,7 +940,11 @@ export class CustomerService extends AbstractService<Customer> {
 			],
 			[],
 			[4, 5],
-			[7, 8, 9, 10])
+			[7, 8, 9, 10],
+			{
+				groups: { group: ["id"] }
+			}
+		)
 	}
 }
 
@@ -583,7 +965,12 @@ export class CustomizationService extends AbstractService<Customization> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 5, 6, 7])
+			[0, 1, 2, 3, 4, 5, 6, 7],
+			{
+				customized_data_text_fields: { customized_data_text_field: ["id_customization_field", "value"] },
+				customized_data_images: { customized_data_image: ["id_customization_field", "value"] }
+			}
+		)
 	}
 }
 
@@ -603,7 +990,9 @@ export class DeliveryService extends AbstractService<Delivery> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 6])
+			[0, 1, 2, 3, 6],
+			null
+		)
 	}
 }
 
@@ -640,7 +1029,9 @@ export class EmployeeService extends AbstractService<Employee> {
 			],
 			[],
 			[1, 2, 3, 4, 5],
-			[0, 6, 7, 8, 9, 12])
+			[0, 6, 7, 8, 9, 12],
+			null
+		)
 	}
 }
 
@@ -659,7 +1050,9 @@ export class GroupService extends AbstractService<Group> {
 			],
 			[5],
 			[],
-			[1, 5])
+			[1, 5],
+			null
+		)
 	}
 }
 
@@ -687,7 +1080,9 @@ export class GuestService extends AbstractService<Guest> {
 			],
 			[],
 			[],
-			[])
+			[],
+			null
+		)
 	}
 }
 
@@ -709,7 +1104,9 @@ export class ImageTypeService extends AbstractService<ImageType> {
 			],
 			[],
 			[],
-			[0, 1, 2])
+			[0, 1, 2],
+			null
+		)
 	}
 }
 
@@ -729,7 +1126,9 @@ export class LanguageService extends AbstractService<Language> {
 			],
 			[],
 			[],
-			[0, 1, 5, 6])
+			[0, 1, 5, 6],
+			null
+		)
 	}
 }
 
@@ -752,7 +1151,11 @@ export class ManufacturerService extends AbstractService<Manufacturer> {
 			],
 			[5, 6, 7, 8, 9],
 			[1],
-			[2])
+			[2],
+			{
+				addresses: { address: ["id"] }
+			}
+		)
 	}
 }
 
@@ -773,7 +1176,9 @@ export class OrderCarrierService extends AbstractService<OrderCarrier> {
 			],
 			[],
 			[],
-			[0, 1])
+			[0, 1],
+			null
+		)
 	}
 }
 
@@ -827,7 +1232,11 @@ export class OrderDetailService extends AbstractService<OrderDetail> {
 			],
 			[],
 			[],
-			[0, 9, 10, 11, 12, 16])
+			[0, 9, 10, 11, 12, 16],
+			{
+				taxes: { tax: ["id"] }
+			}
+		)
 	}
 }
 
@@ -847,7 +1256,9 @@ export class OrderCartRuleService extends AbstractService<OrderCartRule> {
 			],
 			[],
 			[],
-			[0, 1, 3, 4, 5])
+			[0, 1, 3, 4, 5],
+			null
+		)
 	}
 }
 
@@ -864,7 +1275,9 @@ export class OrderHistoryService extends AbstractService<OrderHistory> {
 			],
 			[],
 			[],
-			[1, 2])
+			[1, 2],
+			null
+		)
 	}
 }
 
@@ -897,7 +1310,9 @@ export class OrderInvoiceService extends AbstractService<OrderInvoice> {
 			],
 			[],
 			[],
-			[0, 1])
+			[0, 1],
+			null
+		)
 	}
 }
 
@@ -921,7 +1336,9 @@ export class OrderPaymentService extends AbstractService<OrderPayment> {
 			],
 			[],
 			[],
-			[1, 2])
+			[1, 2],
+			null
+		)
 	}
 }
 
@@ -948,7 +1365,11 @@ export class OrderSlipService extends AbstractService<OrderSlip> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 5, 6])
+			[0, 1, 2, 3, 4, 5, 6],
+			{
+				order_slip_details: { order_slip_detail: ["id", "id_order_detail", "product_quantity", "amount_tax_excl", "amount_tax_incl"] }
+			}
+		)
 	}
 }
 
@@ -976,7 +1397,9 @@ export class OrderStateService extends AbstractService<OrderState> {
 			],
 			[13, 14],
 			[],
-			[13])
+			[13],
+			null
+		)
 	}
 }
 
@@ -1034,7 +1457,11 @@ export class OrderService extends AbstractService<Order> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 5, 6, 8, 20, 28, 31, 32, 33, 43])
+			[0, 1, 2, 3, 4, 5, 6, 8, 20, 28, 31, 32, 33, 43],
+			{
+				order_rows: { order_row: ["id", "product_id", "product_attribute_id", "product_quantity", "product_name", "product_reference", "product_ean13", "product_upc", "product_price", "unit_price_tax_incl", "unit_price_tax_excl"] }
+			}
+		)
 	}
 }
 
@@ -1050,7 +1477,9 @@ export class PriceRangeService extends AbstractService<PriceRange> {
 			],
 			[],
 			[],
-			[0, 1, 2])
+			[0, 1, 2],
+			null
+		)
 	}
 }
 
@@ -1067,7 +1496,9 @@ export class CustomizationFieldService extends AbstractService<CustomizationFiel
 			],
 			[3],
 			[],
-			[0, 1, 2, 3])
+			[0, 1, 2, 3],
+			null
+		)
 	}
 }
 
@@ -1083,7 +1514,9 @@ export class ProductFeatureValueService extends AbstractService<ProductFeatureVa
 			],
 			[2],
 			[],
-			[0, 2])
+			[0, 2],
+			null
+		)
 	}
 }
 
@@ -1098,7 +1531,9 @@ export class ProductFeatureService extends AbstractService<ProductFeature> {
 			],
 			[1],
 			[],
-			[1])
+			[1],
+			null
+		)
 	}
 }
 
@@ -1115,7 +1550,9 @@ export class ProductOptionValueService extends AbstractService<ProductOptionValu
 			],
 			[3],
 			[],
-			[0, 3])
+			[0, 3],
+			null
+		)
 	}
 }
 
@@ -1133,7 +1570,11 @@ export class ProductOptionService extends AbstractService<ProductOption> {
 			],
 			[3, 4],
 			[],
-			[1, 3, 4])
+			[1, 3, 4],
+			{
+				product_option_values: { product_option_value: ["id"] }
+			}
+		)
 	}
 }
 
@@ -1152,7 +1593,9 @@ export class ProductSupplierService extends AbstractService<ProductSupplier> {
 			],
 			[],
 			[],
-			[0, 1, 2])
+			[0, 1, 2],
+			null
+		)
 	}
 }
 
@@ -1225,7 +1668,19 @@ export class ProductService extends AbstractService<Product> {
 			],
 			[51, 52, 53, 54, 55, 56, 57, 58, 59],
 			[9, 10],
-			[30, 54, 55])
+			[30, 54, 55],
+			{
+				categories: { category: ["id"] },
+				images: { image: ["id"] },
+				combinations: { combination: ["id"] },
+				product_option_values: { product_option_value: ["id"] },
+				product_features: { product_feature: ["id", "id_feature_value"] },
+				tags: { tag: ["id"] },
+				stock_availables: { stock_available: ["id", "id_product_attribute"] },
+				accessories: { product: ["id"] },
+				product_bundle: { product: ["id", "quantity"] }
+			}
+		)
 	}
 }
 
@@ -1244,7 +1699,9 @@ export class ShopGroupService extends AbstractService<ShopGroup> {
 			],
 			[],
 			[],
-			[0])
+			[0],
+			null
+		)
 	}
 }
 
@@ -1264,7 +1721,9 @@ export class ShopUrlService extends AbstractService<ShopUrl> {
 			],
 			[],
 			[],
-			[0, 3])
+			[0, 3],
+			null
+		)
 	}
 }
 
@@ -1283,7 +1742,9 @@ export class ShopService extends AbstractService<Shop> {
 			],
 			[],
 			[],
-			[0, 1, 2, 5])
+			[0, 1, 2, 5],
+			null
+		)
 	}
 }
 
@@ -1308,7 +1769,9 @@ export class SpecificPriceRuleService extends AbstractService<SpecificPriceRule>
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+			[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+			null
+		)
 	}
 }
 
@@ -1338,7 +1801,9 @@ export class SpecificPriceService extends AbstractService<SpecificPrice> {
 			],
 			[],
 			[],
-			[1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16])
+			[1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16],
+			null
+		)
 	}
 }
 
@@ -1356,7 +1821,9 @@ export class StateService extends AbstractService<State> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3])
+			[0, 1, 2, 3],
+			null
+		)
 	}
 }
 
@@ -1376,7 +1843,9 @@ export class StockAvailableService extends AbstractService<StockAvailable> {
 			],
 			[],
 			[],
-			[0, 1, 4, 5, 6])
+			[0, 1, 4, 5, 6],
+			null
+		)
 	}
 }
 
@@ -1394,7 +1863,9 @@ export class StockMovementReasonService extends AbstractService<StockMovementRea
 			],
 			[4],
 			[],
-			[4])
+			[4],
+			null
+		)
 	}
 }
 
@@ -1427,7 +1898,9 @@ export class StockMvtService extends AbstractService<StockMvt> {
 			],
 			[10],
 			[],
-			[5, 6, 7, 14, 15, 18, 19])
+			[5, 6, 7, 14, 15, 18, 19],
+			null
+		)
 	}
 }
 
@@ -1450,7 +1923,9 @@ export class StockService extends AbstractService<Stock> {
 			],
 			[],
 			[3],
-			[0, 1, 2, 7, 8, 9])
+			[0, 1, 2, 7, 8, 9],
+			null
+		)
 	}
 }
 
@@ -1480,7 +1955,9 @@ export class StoreService extends AbstractService<Store> {
 			],
 			[],
 			[],
-			[0, 3, 4, 7, 14])
+			[0, 3, 4, 7, 14],
+			null
+		)
 	}
 }
 
@@ -1502,7 +1979,9 @@ export class SupplierService extends AbstractService<Supplier> {
 			],
 			[5, 6, 7, 8],
 			[],
-			[1])
+			[1],
+			null
+		)
 	}
 }
 
@@ -1536,7 +2015,9 @@ export class SupplyOrderDetailService extends AbstractService<SupplyOrderDetail>
 			],
 			[],
 			[],
-			[0, 1, 2, 5, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+			[0, 1, 2, 5, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+			null
+		)
 	}
 }
 
@@ -1555,7 +2036,9 @@ export class SupplyOrderHistoryService extends AbstractService<SupplyOrderHistor
 			],
 			[],
 			[],
-			[0, 1, 2, 5])
+			[0, 1, 2, 5],
+			null
+		)
 	}
 }
 
@@ -1575,7 +2058,9 @@ export class SupplyOrderReceiptHistoryService extends AbstractService<SupplyOrde
 			],
 			[],
 			[],
-			[0, 1, 2, 5])
+			[0, 1, 2, 5],
+			null
+		)
 	}
 }
 
@@ -1595,7 +2080,9 @@ export class SupplyOrderStateService extends AbstractService<SupplyOrderState> {
 			],
 			[6],
 			[],
-			[6])
+			[6],
+			null
+		)
 	}
 }
 
@@ -1625,7 +2112,11 @@ export class SupplyOrderService extends AbstractService<SupplyOrder> {
 			],
 			[],
 			[],
-			[0, 1, 2, 3, 4, 6, 7])
+			[0, 1, 2, 3, 4, 6, 7],
+			{
+				supply_order_details: { supply_order_detail: ["id", "id_product", "id_product_attribute", "supplier_reference", "product_name"] }
+			}
+		)
 	}
 }
 
@@ -1640,7 +2131,9 @@ export class TagService extends AbstractService<Tag> {
 			],
 			[],
 			[],
-			[0, 1])
+			[0, 1],
+			null
+		)
 	}
 }
 
@@ -1658,7 +2151,9 @@ export class TaxRuleGroupService extends AbstractService<TaxRuleGroup> {
 			],
 			[],
 			[],
-			[0])
+			[0],
+			null
+		)
 	}
 }
 
@@ -1679,7 +2174,9 @@ export class TaxRuleService extends AbstractService<TaxRule> {
 			],
 			[],
 			[],
-			[0, 2, 5])
+			[0, 2, 5],
+			null
+		)
 	}
 }
 
@@ -1696,7 +2193,9 @@ export class TaxService extends AbstractService<Tax> {
 			],
 			[3],
 			[],
-			[0, 3])
+			[0, 3],
+			null
+		)
 	}
 }
 
@@ -1715,7 +2214,9 @@ export class TranslatedConfigurationService extends AbstractService<TranslatedCo
 			],
 			[0],
 			[],
-			[3])
+			[3],
+			null
+		)
 	}
 }
 
@@ -1732,7 +2233,9 @@ export class WarehouseProductLocationService extends AbstractService<WarehousePr
 			],
 			[],
 			[],
-			[0, 1, 2])
+			[0, 1, 2],
+			null
+		)
 	}
 }
 
@@ -1753,7 +2256,13 @@ export class WarehouseService extends AbstractService<Warehouse> {
 			],
 			[],
 			[3],
-			[0, 1, 2, 5, 6, 7])
+			[0, 1, 2, 5, 6, 7],
+			{
+				stocks: { stock: ["id"] },
+				carriers: { carrier: ["id"] },
+				shops: { shop: ["id", "name"] }
+			}
+		)
 	}
 }
 
@@ -1769,7 +2278,9 @@ export class WeightRangeService extends AbstractService<WeightRange> {
 			],
 			[],
 			[],
-			[0, 1, 2])
+			[0, 1, 2],
+			null
+		)
 	}
 }
 
@@ -1784,6 +2295,8 @@ export class ZoneService extends AbstractService<Zone> {
 			],
 			[],
 			[],
-			[0])
+			[0],
+			null
+		)
 	}
 }
