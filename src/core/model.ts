@@ -107,7 +107,7 @@ export interface Cart extends PSObject {
 	date_upd?: string | null
 	
 	associations?: {
-		cart_rows: {
+		cart_rows?: {
 			id_product: string,
 			id_product_attribute: string,
 			id_address_delivery: string,
@@ -134,8 +134,8 @@ export interface Category extends PSObject {
 	meta_keywords?: string | null
 	
 	associations?: {
-		categories: {id: string}[],
-		products: {id: string}[]
+		categories?: {id: string}[],
+		products?: {id: string}[]
 	}
 }				
 				
@@ -157,8 +157,8 @@ export interface Combination extends PSObject {
 	available_date?: string | null
 	
 	associations?: {
-		product_option_values: {id: string}[],
-		images: {id: string}[]
+		product_option_values?: {id: string}[],
+		images?: {id: string}[]
 	}
 }				
 				
@@ -244,7 +244,7 @@ export interface CustomerThread extends PSObject {
 	date_upd?: string | null
 	
 	associations?: {
-		customer_messages: {id: string}[]
+		customer_messages?: {id: string}[]
 	}
 }				
 				
@@ -281,7 +281,7 @@ export interface Customer extends PSObject {
 	date_upd?: string | null
 	
 	associations?: {
-		groups: {id: string}[]
+		groups?: {id: string}[]
 	}
 }				
 				
@@ -296,11 +296,11 @@ export interface Customization extends PSObject {
 	in_cart?: string | null
 	
 	associations?: {
-		customized_data_text_fields: {
+		customized_data_text_fields?: {
 			id_customization_field: string,
 			value: string
 		}[],
-		customized_data_images: {
+		customized_data_images?: {
 			id_customization_field: string,
 			value: string
 		}[]
@@ -406,7 +406,7 @@ export interface Manufacturer extends PSObject {
 	meta_keywords?: string | null
 	
 	associations?: {
-		addresses: {id: string}[]
+		addresses?: {id: string}[]
 	}
 }				
 				
@@ -465,7 +465,7 @@ export interface OrderDetail extends PSObject {
 	original_wholesale_price?: string | null
 	
 	associations?: {
-		taxes: {id: string}[]
+		taxes?: {id: string}[]
 	}
 }				
 				
@@ -540,7 +540,7 @@ export interface OrderSlip extends PSObject {
 	order_slip_type?: string | null
 	
 	associations?: {
-		order_slip_details: {
+		order_slip_details?: {
 			id: string,
 			id_order_detail: string,
 			product_quantity: string,
@@ -616,7 +616,7 @@ export interface Order extends PSObject {
 	reference?: string | null
 	
 	associations?: {
-		order_rows: {
+		order_rows?: {
 			id: string,
 			product_id: string,
 			product_attribute_id: string,
@@ -671,7 +671,7 @@ export interface ProductOption extends PSObject {
 	public_name?: string | null
 	
 	associations?: {
-		product_option_values: {id: string}[]
+		product_option_values?: {id: string}[]
 	}
 }				
 				
@@ -747,21 +747,21 @@ export interface Product extends PSObject {
 	available_later?: string | null
 	
 	associations?: {
-		categories: {id: string}[],
-		images: {id: string}[],
-		combinations: {id: string}[],
-		product_option_values: {id: string}[],
-		product_features: {
+		categories?: {id: string}[],
+		images?: {id: string}[],
+		combinations?: {id: string}[],
+		product_option_values?: {id: string}[],
+		product_features?: {
 			id: string,
 			id_feature_value: string
 		}[],
-		tags: {id: string}[],
-		stock_availables: {
+		tags?: {id: string}[],
+		stock_availables?: {
 			id: string,
 			id_product_attribute: string
 		}[],
-		accessories: {id: string}[],
-		product_bundle: {
+		accessories?: {id: string}[],
+		product_bundle?: {
 			id: string,
 			quantity: string
 		}[]
@@ -998,7 +998,7 @@ export interface SupplyOrder extends PSObject {
 	date_upd?: string | null
 	
 	associations?: {
-		supply_order_details: {
+		supply_order_details?: {
 			id: string,
 			id_product: string,
 			id_product_attribute: string,
@@ -1066,9 +1066,9 @@ export interface Warehouse extends PSObject {
 	management_type?: string | null
 	
 	associations?: {
-		stocks: {id: string}[],
-		carriers: {id: string}[],
-		shops: {
+		stocks?: {id: string}[],
+		carriers?: {id: string}[],
+		shops?: {
 			id: string,
 			name: string
 		}[]
