@@ -1,1 +1,1 @@
-find src -name "*.js" -delete && rm base.spec.js
+find src -name "*.js" -delete && find -maxdepth 1 -name "*.spec.js" -delete

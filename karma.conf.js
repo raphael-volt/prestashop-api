@@ -13,7 +13,7 @@ module.exports = function (config) {
     frameworks: ["jasmine", "karma-typescript"],
 
     files: [
-      "base.spec.ts",
+      "init-test-bed.spec.ts",
       { pattern: "src/**/*.ts" }
     ],
 

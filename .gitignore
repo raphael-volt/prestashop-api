@@ -29,7 +29,7 @@ Desktop.ini
 **/*.ngfactory.ts
 
 # Karma transform
-base.spec.js
+init-test-bed.spec.js
 src/**/*.js
 
 # angular-cli-tools
