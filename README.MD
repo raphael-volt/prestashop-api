@@ -7,14 +7,10 @@ To install this library, run:
 ```bash
 $ npm install prestashop-api --save
 ```
+## Documentation
+
+Examples of use will be added here while unit tests will be pushed.
 
 ## License
 
 MIT © [Raphael Volt](mailto:raphael.ketmie@gmail.com)
-
-## Karma
-
-Delete generated js files by the `karma-typescript-angular2-transform` plugin :
-```
-. clean-js.sh
-```
