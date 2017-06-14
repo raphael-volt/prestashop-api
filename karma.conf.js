@@ -11,10 +11,15 @@ module.exports = function (config) {
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
     frameworks: ["jasmine", "karma-typescript"],
-
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage-istanbul-reporter')
+    ],
     files: [
       "init-test-bed.spec.ts",
-      { pattern: "src/**/*.ts" }
+      "src/**/*.ts"
     ],
 
 
@@ -22,13 +27,19 @@ module.exports = function (config) {
     exclude: [
       "angular-cli-tools"
     ],
-
-
+    client: {
+      clearContext: false // leave Jasmine Spec Runner output visible in browser
+    },
+    coverageIstanbulReporter: {
+      reports: ['html', 'lcovonly'],
+      fixWebpackSourcePaths: true
+    },
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
-    preprocessors: {
-      "**/*.ts": ["karma-typescript"]
-    },
+
+    //preprocessors: {
+    //  "**/*.ts": ["karma-typescript"]
+    //},
 
     karmaTypescriptConfig: {
       exclude: [
@@ -41,13 +52,13 @@ module.exports = function (config) {
         ]
       },
       compilerOptions: {
-        lib: ["ES2015", "DOM"]
+        lib: ["ES2016", "DOM"]
       }
     },
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress', "karma-typescript"],
+    reporters: ['progress', "kjhtml"],
 
 
     // web server port
