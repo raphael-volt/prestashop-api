@@ -140,6 +140,8 @@ describe('FakeServiceService', () => {
 <id>62</id>
 </category>
 </categories>
+<products>
+</products>
 </associations>
 </category>
 </prestashop>`

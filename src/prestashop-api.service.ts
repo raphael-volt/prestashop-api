@@ -201,8 +201,9 @@ export abstract class AbstractService<T extends PSObject> {
 		return this.http.request(
 			this.requestService.resource(this.resource, id, this.id_language)
 		).map(response => {
-			const json = response.json()
-			return json[this.nodename][0]
+			const result = this.getResponseData(response)
+			this.validateAssociations(result[0])
+			return result[0]
 		})
 	}
 
@@ -211,7 +212,12 @@ export abstract class AbstractService<T extends PSObject> {
 		if (unallowed)
 			return unallowed
 		return this.http.request(this.requestService.search(this.resource, parameters)).map(response => {
-			return response.json()[this.resource]
+			const result = this.getResponseData(response)
+			if(parameters.display == APIParametersValues.full) {
+				for(let item of result)
+					this.validateAssociations(item)
+			}
+			return result
 		})
 	}
 
@@ -276,6 +282,20 @@ export abstract class AbstractService<T extends PSObject> {
 		return `<${PRESTASHOP}>
 ${output.join("\n")}
 </${PRESTASHOP}>`
+	}
+
+	private validateAssociations(item :PSObject) {
+		if(!this.associations)
+			return
+		const associations: any = item[ASSOCIATIONS]
+		for(let name in this.associations) {
+			if(! associations[name])
+				associations[name] = []
+		}
+	}
+
+	private getResponseData(response: Response): PSObject[] {
+		return response.json()[this.resource]
 	}
 
 	private send(input: T | T[], method: RequestMethod): Observable<T | T[] |  any> {
