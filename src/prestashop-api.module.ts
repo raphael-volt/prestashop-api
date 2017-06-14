@@ -148,3 +148,4 @@ import { RequestService } from "./core/request";
     exports: []
 })
 export class PrestashopApiModule { }
+
